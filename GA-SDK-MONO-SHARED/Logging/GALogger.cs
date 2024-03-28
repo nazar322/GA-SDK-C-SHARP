@@ -13,56 +13,56 @@ using System.IO;
 
 namespace GameAnalyticsSDK.Net.Logging
 {
-	internal class GALogger
-	{
-#region Fields and properties
+    internal class GALogger
+    {
+        #region Fields and properties
 
-		private static readonly GALogger _instance = new GALogger();
-		private bool infoLogEnabled;
-		private bool infoLogVerboseEnabled;
+        private static readonly GALogger _instance = new GALogger();
+        private bool infoLogEnabled;
+        private bool infoLogVerboseEnabled;
 #pragma warning disable 0649
-		private static bool debugEnabled;
+        private static bool debugEnabled;
 #pragma warning restore 0649
-		private const string Tag = "GameAnalytics";
+        private const string Tag = "GameAnalytics";
 
 #if WINDOWS_UWP || WINDOWS_WSA
         private IFileLoggingSession session;
         private ILoggingChannel logger;
         private ILogger log;
 #elif MONO || NETCOREAPP
-		private static ILogger logger;
+        private static ILogger logger;
 #elif !UNITY
         private ILogger logger;
 #endif
 
         private static GALogger Instance
-		{
-			get 
-			{
-				return _instance;
-			}
-		}
+        {
+            get
+            {
+                return _instance;
+            }
+        }
 
-		public static bool InfoLog 
-		{
-			set 
-			{
-				Instance.infoLogEnabled = value;
-			}
-		}
+        public static bool InfoLog
+        {
+            set
+            {
+                Instance.infoLogEnabled = value;
+            }
+        }
 
-		public static bool VerboseLog
-		{
-			set
-			{
-				Instance.infoLogVerboseEnabled = value;
-			}
-		}
+        public static bool VerboseLog
+        {
+            set
+            {
+                Instance.infoLogVerboseEnabled = value;
+            }
+        }
 
-#endregion // Fields and properties
+        #endregion // Fields and properties
 
-		private GALogger()
-		{
+        private GALogger()
+        {
 #if DEBUG
             debugEnabled = true;
 #endif
@@ -80,85 +80,87 @@ namespace GameAnalyticsSDK.Net.Logging
             log = LogManagerFactory.DefaultLogManager.GetLogger<GALogger>();
 #elif MONO || NETCOREAPP
             logger = LogManager.GetCurrentClassLogger();
-			var config = new LoggingConfiguration();
 
-			var consoleTarget = new ColoredConsoleTarget();
-			config.AddTarget("console", consoleTarget);
+            if (LogManager.Configuration == null)
+            {
+                LogManager.Configuration = new LoggingConfiguration();
+            }
 
-			var fileTarget = new FileTarget();
-			config.AddTarget("file", fileTarget);
+            var consoleTarget = new ColoredConsoleTarget();
+            LogManager.Configuration.AddTarget("ga-log-console", consoleTarget);
 
-			//consoleTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger} ${message}";
-			fileTarget.FileName = GADevice.WritablePath + Path.DirectorySeparatorChar + "ga_log.txt";
-			fileTarget.Layout = "${message}";
+            var fileTarget = new FileTarget();
+            LogManager.Configuration.AddTarget("ga-log-file", fileTarget);
 
-			var rule1 = new LoggingRule("*", LogLevel.Debug, consoleTarget);
-			config.LoggingRules.Add(rule1);
+            //consoleTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger} ${message}";
+            fileTarget.FileName = GADevice.WritablePath + Path.DirectorySeparatorChar + "ga_log.txt";
+            fileTarget.Layout = "${message}";
 
-			var rule2 = new LoggingRule("*", LogLevel.Debug, fileTarget);
-			config.LoggingRules.Add(rule2);
+            var rule1 = new LoggingRule(logger.Name, LogLevel.Debug, consoleTarget);
+            LogManager.Configuration.LoggingRules.Add(rule1);
 
-			LogManager.Configuration = config;
+            var rule2 = new LoggingRule(logger.Name, LogLevel.Debug, fileTarget);
+            LogManager.Configuration.LoggingRules.Add(rule2);
 #endif
         }
 
         #region Public methods
 
         public static void I(String format)
-		{
-			if(!Instance.infoLogEnabled)
-			{
-				return;
-			}
+        {
+            if (!Instance.infoLogEnabled)
+            {
+                return;
+            }
 
-			string message = "Info/" + Tag + ": " + format;
-			Instance.SendNotificationMessage(message, EGALoggerMessageType.Info);
-		}
+            string message = "Info/" + Tag + ": " + format;
+            Instance.SendNotificationMessage(message, EGALoggerMessageType.Info);
+        }
 
-		public static void W(String format)
-		{
-			string message = "Warning/" + Tag + ": " + format;
-			Instance.SendNotificationMessage(message, EGALoggerMessageType.Warning);
-		}
+        public static void W(String format)
+        {
+            string message = "Warning/" + Tag + ": " + format;
+            Instance.SendNotificationMessage(message, EGALoggerMessageType.Warning);
+        }
 
-		public static void E(String format)
-		{
-			string message = "Error/" + Tag + ": " + format;
-			Instance.SendNotificationMessage(message, EGALoggerMessageType.Error);
-		}
+        public static void E(String format)
+        {
+            string message = "Error/" + Tag + ": " + format;
+            Instance.SendNotificationMessage(message, EGALoggerMessageType.Error);
+        }
 
-		public static void II(String format)
-		{
-			if(!Instance.infoLogVerboseEnabled)
-			{
-				return;
-			}
+        public static void II(String format)
+        {
+            if (!Instance.infoLogVerboseEnabled)
+            {
+                return;
+            }
 
-			string message = "Verbose/" + Tag + ": " + format;
-			Instance.SendNotificationMessage(message, EGALoggerMessageType.Info);
-		}
+            string message = "Verbose/" + Tag + ": " + format;
+            Instance.SendNotificationMessage(message, EGALoggerMessageType.Info);
+        }
 
-		public static void D(String format)
-		{
-			if(!debugEnabled)
-			{
-				return;
-			}
+        public static void D(String format)
+        {
+            if (!debugEnabled)
+            {
+                return;
+            }
 
-			string message = "Debug/" + Tag + ": " + format;
-			Instance.SendNotificationMessage(message, EGALoggerMessageType.Debug);
-		}
+            string message = "Debug/" + Tag + ": " + format;
+            Instance.SendNotificationMessage(message, EGALoggerMessageType.Debug);
+        }
 
-#endregion // Public methods
+        #endregion // Public methods
 
-#region Private methods
+        #region Private methods
 
-		private void SendNotificationMessage(string message, EGALoggerMessageType type)
-		{
-			switch(type)
-			{
-				case EGALoggerMessageType.Error:
-					{
+        private void SendNotificationMessage(string message, EGALoggerMessageType type)
+        {
+            switch (type)
+            {
+                case EGALoggerMessageType.Error:
+                    {
 #if UNITY
                         UnityEngine.Debug.LogError(message);
 #elif WINDOWS_UWP || WINDOWS_WSA
@@ -174,8 +176,8 @@ namespace GameAnalyticsSDK.Net.Logging
                     }
                     break;
 
-				case EGALoggerMessageType.Warning:
-					{
+                case EGALoggerMessageType.Warning:
+                    {
 #if UNITY
                         UnityEngine.Debug.LogWarning(message);
 #elif WINDOWS_UWP || WINDOWS_WSA
@@ -183,7 +185,7 @@ namespace GameAnalyticsSDK.Net.Logging
                         log.Warn(message);
                         GameAnalytics.MessageLogged(message, type);
 #elif MONO || NETCOREAPP
-						logger.Warn(message);
+                        logger.Warn(message);
 #else
                         logger.LogWarning(message);
                         GameAnalytics.MessageLogged(message, type);
@@ -191,8 +193,8 @@ namespace GameAnalyticsSDK.Net.Logging
                     }
                     break;
 
-				case EGALoggerMessageType.Debug:
-					{
+                case EGALoggerMessageType.Debug:
+                    {
 #if UNITY
                         UnityEngine.Debug.Log(message);
 #elif WINDOWS_UWP || WINDOWS_WSA
@@ -208,8 +210,8 @@ namespace GameAnalyticsSDK.Net.Logging
                     }
                     break;
 
-				case EGALoggerMessageType.Info:
-					{
+                case EGALoggerMessageType.Info:
+                    {
 #if UNITY
                         UnityEngine.Debug.Log(message);
 #elif WINDOWS_UWP || WINDOWS_WSA
@@ -224,10 +226,10 @@ namespace GameAnalyticsSDK.Net.Logging
 #endif
                     }
                     break;
-			}
-		}
+            }
+        }
 
-#endregion // Private methods
-	}
+        #endregion // Private methods
+    }
 }
 
