@@ -101,6 +101,8 @@ namespace GameAnalyticsSDK.Net.Logging
 
             var rule2 = new LoggingRule(logger.Name, LogLevel.Debug, fileTarget);
             LogManager.Configuration.LoggingRules.Add(rule2);
+
+            LogManager.ReconfigExistingLoggers();
 #endif
         }
 
