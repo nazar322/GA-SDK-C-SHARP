@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>GA_SDK_NET_CORE</RootNamespace>
     <AssemblyName>GameAnalytics.Net.Core</AssemblyName>
     <PackOnBuild>true</PackOnBuild>
